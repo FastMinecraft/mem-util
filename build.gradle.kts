@@ -37,8 +37,6 @@ tasks {
         javaToolchains {
             this@test.javaLauncher.set(launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(8))
-                @Suppress("UnstableApiUsage")
-                vendor.set(JvmVendorSpec.IBM_SEMERU)
             })
         }
         useJUnitPlatform()
