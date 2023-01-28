@@ -402,6 +402,126 @@ class MemoryPointerTest {
         pointer.free()
     }
 
+    @Test
+    fun testIterationByte() {
+        val array = randomBytes()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong())
+
+        pointer.setBytesUnsafe(array)
+
+        var index = 0
+        pointer.forEachByteUnsafe { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachByteIndexedUnsafe(testDataSize / 4L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
+    @Test
+    fun testIterationShort() {
+        val array = randomShorts()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong() * 2)
+
+        pointer.setShortsUnsafe(array)
+
+        var index = 0
+        pointer.forEachShortUnsafe { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachShortIndexedUnsafe(testDataSize / 4L * 2L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
+    @Test
+    fun testIterationInt() {
+        val array = randomInts()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong() * 4)
+
+        pointer.setIntsUnsafe(array)
+
+        var index = 0
+        pointer.forEachIntUnsafe { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachIntIndexedUnsafe(testDataSize / 4L * 4L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
+    @Test
+    fun testIterationLong() {
+        val array = randomLongs()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong() * 8)
+
+        pointer.setLongsUnsafe(array)
+
+        var index = 0
+        pointer.forEachLongUnsafe { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachLongIndexedUnsafe(testDataSize / 4L * 8L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
+    @Test
+    fun testIterationFloat() {
+        val array = randomFloats()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong() * 4)
+
+        pointer.setFloatsUnsafe(array)
+
+        var index = 0
+        pointer.forEachFloatUnsafe { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachFloatIndexedUnsafe(testDataSize / 4L * 4L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
+    @Test
+    fun testIterationDouble() {
+        val array = randomDoubles()
+
+        val pointer = MemoryPointer.malloc(array.size.toLong() * 8)
+
+        pointer.setDoublesUnsafe(array)
+
+        var index = 0
+        pointer.forEachDouble { v ->
+            assert(v == array[index++])
+        }
+
+        pointer.forEachDoubleIndexed(testDataSize / 4L * 8L, testDataSize / 2) { i, v ->
+            assert(v == array[i + testDataSize / 4])
+        }
+
+        pointer.free()
+    }
+
     private fun randomBytes(): ByteArray {
         val random = Random()
         val array = ByteArray(testDataSize)

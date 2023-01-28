@@ -441,6 +441,13 @@ interface MemoryPointer : AutoCloseable {
         return a
     }
 
+    fun subList(offset: Long = 0, length: Long = this.length): MemoryPointer {
+        if (offset < 0L || offset + length > this.length) {
+            throw IndexOutOfBoundsException("offset $offset is out of bounds for length $length")
+        }
+        return MemoryList.wrap(this, offset, length)
+    }
+
     fun ensureCapacity(capacity: Long) {
         require(capacity >= 0) { "Capacity must be positive or zero" }
         if (capacity > this.length) {
@@ -557,7 +564,7 @@ inline fun MemoryPointer.forEachByteUnsafe(
     length: Int = this.length.toInt(),
     block: (Byte) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getByte(byteOffset + i))
     }
 }
@@ -565,9 +572,9 @@ inline fun MemoryPointer.forEachByteUnsafe(
 inline fun MemoryPointer.forEachByteIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = this.length.toInt(),
-    block: (Long, Byte) -> Unit
+    block: (Int, Byte) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getByte(byteOffset + i))
     }
 }
@@ -577,7 +584,7 @@ inline fun MemoryPointer.forEachShortUnsafe(
     length: Int = (this.length / 2L).toInt(),
     block: (Short) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getShort(byteOffset + i * 2L))
     }
 }
@@ -585,9 +592,9 @@ inline fun MemoryPointer.forEachShortUnsafe(
 inline fun MemoryPointer.forEachShortIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = (this.length / 2L).toInt(),
-    block: (Long, Short) -> Unit
+    block: (Int, Short) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getShort(byteOffset + i * 2L))
     }
 }
@@ -597,7 +604,7 @@ inline fun MemoryPointer.forEachIntUnsafe(
     length: Int = (this.length / 4L).toInt(),
     block: (Int) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getInt(byteOffset + i * 4L))
     }
 }
@@ -605,9 +612,9 @@ inline fun MemoryPointer.forEachIntUnsafe(
 inline fun MemoryPointer.forEachIntIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = (this.length / 4L).toInt(),
-    block: (Long, Int) -> Unit
+    block: (Int, Int) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getInt(byteOffset + i * 4L))
     }
 }
@@ -617,7 +624,7 @@ inline fun MemoryPointer.forEachLongUnsafe(
     length: Int = (this.length / 8L).toInt(),
     block: (Long) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getLong(byteOffset + i * 8L))
     }
 }
@@ -625,9 +632,9 @@ inline fun MemoryPointer.forEachLongUnsafe(
 inline fun MemoryPointer.forEachLongIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = (this.length / 8L).toInt(),
-    block: (Long, Long) -> Unit
+    block: (Int, Long) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getLong(byteOffset + i * 8L))
     }
 }
@@ -637,7 +644,7 @@ inline fun MemoryPointer.forEachFloatUnsafe(
     length: Int = (this.length / 4L).toInt(),
     block: (Float) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getFloat(byteOffset + i * 4L))
     }
 }
@@ -645,9 +652,9 @@ inline fun MemoryPointer.forEachFloatUnsafe(
 inline fun MemoryPointer.forEachFloatIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = (this.length / 4L).toInt(),
-    block: (Long, Float) -> Unit
+    block: (Int, Float) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getFloat(byteOffset + i * 4L))
     }
 }
@@ -657,7 +664,7 @@ inline fun MemoryPointer.forEachDoubleUnsafe(
     length: Int = (this.length / 8L).toInt(),
     block: (Double) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(getDouble(byteOffset + i * 8L))
     }
 }
@@ -665,9 +672,9 @@ inline fun MemoryPointer.forEachDoubleUnsafe(
 inline fun MemoryPointer.forEachDoubleIndexedUnsafe(
     byteOffset: Long = 0L,
     length: Int = (this.length / 8L).toInt(),
-    block: (Long, Double) -> Unit
+    block: (Int, Double) -> Unit
 ) {
-    for (i in 0L until length) {
+    for (i in 0 until length) {
         block(i, getDouble(byteOffset + i * 8L))
     }
 }
@@ -682,6 +689,15 @@ inline fun MemoryPointer.forEachByte(
     forEachByteUnsafe(byteOffset, length, block)
 }
 
+inline fun MemoryPointer.forEachByteIndexed(
+    byteOffset: Long = 0L,
+    length: Int = this.length.toInt(),
+    block: (Int, Byte) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 1)
+    forEachByteIndexedUnsafe(byteOffset, length, block)
+}
+
 inline fun MemoryPointer.forEachShort(
     byteOffset: Long = 0L,
     length: Int = (this.length / 2L).toInt(),
@@ -689,6 +705,15 @@ inline fun MemoryPointer.forEachShort(
 ) {
     checkForeachIndexRange(byteOffset, length , 2)
     forEachShortUnsafe(byteOffset, length, block)
+}
+
+inline fun MemoryPointer.forEachShortIndexed(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 2L).toInt(),
+    block: (Int, Short) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 2)
+    forEachShortIndexedUnsafe(byteOffset, length, block)
 }
 
 inline fun MemoryPointer.forEachInt(
@@ -700,6 +725,15 @@ inline fun MemoryPointer.forEachInt(
     forEachIntUnsafe(byteOffset, length, block)
 }
 
+inline fun MemoryPointer.forEachIntIndexed(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Int, Int) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 4)
+    forEachIntIndexedUnsafe(byteOffset, length, block)
+}
+
 inline fun MemoryPointer.forEachLong(
     byteOffset: Long = 0L,
     length: Int = (this.length / 8L).toInt(),
@@ -707,6 +741,15 @@ inline fun MemoryPointer.forEachLong(
 ) {
     checkForeachIndexRange(byteOffset, length , 8)
     forEachLongUnsafe(byteOffset, length, block)
+}
+
+inline fun MemoryPointer.forEachLongIndexed(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Int, Long) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 8)
+    forEachLongIndexedUnsafe(byteOffset, length, block)
 }
 
 inline fun MemoryPointer.forEachFloat(
@@ -718,6 +761,15 @@ inline fun MemoryPointer.forEachFloat(
     forEachFloatUnsafe(byteOffset, length, block)
 }
 
+inline fun MemoryPointer.forEachFloatIndexed(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Int, Float) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 4)
+    forEachFloatIndexedUnsafe(byteOffset, length, block)
+}
+
 inline fun MemoryPointer.forEachDouble(
     byteOffset: Long = 0L,
     length: Int = (this.length / 8L).toInt(),
@@ -726,6 +778,16 @@ inline fun MemoryPointer.forEachDouble(
     checkForeachIndexRange(byteOffset, length , 8)
     forEachDoubleUnsafe(byteOffset, length, block)
 }
+
+inline fun MemoryPointer.forEachDoubleIndexed(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Int, Double) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 8)
+    forEachDoubleIndexedUnsafe(byteOffset, length, block)
+}
+
 
 fun MemoryPointer.checkForeachIndexRange(byteOffset: Long, length: Int, unitSize: Int) {
     if (byteOffset < 0L || byteOffset > this.length) {
