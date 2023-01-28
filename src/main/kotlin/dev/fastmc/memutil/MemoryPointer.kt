@@ -2,7 +2,7 @@ package dev.fastmc.memutil
 
 import kotlin.math.min
 
-interface MemoryPointer {
+interface MemoryPointer : AutoCloseable {
     var length: Long
     var address: Long
 
@@ -16,6 +16,10 @@ interface MemoryPointer {
             UNSAFE.freeMemory(address)
             address = 0L
         }
+    }
+
+    override fun close() {
+        free()
     }
 
     // Read access
@@ -100,8 +104,19 @@ interface MemoryPointer {
     }
 
     // Unsafe bulk read access
-    fun getBytesUnsafe(a: ByteArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): ByteArray {
-        UNSAFE.copyMemory(null, address + srcByteOffset, a, (BYTE_ARRAY_OFFSET + dstByteOffset).toLong(), length.toLong())
+    fun getBytesUnsafe(
+        a: ByteArray,
+        srcByteOffset: Long = 0L,
+        dstByteOffset: Int = 0,
+        length: Int = a.size
+    ): ByteArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (BYTE_ARRAY_OFFSET + dstByteOffset).toLong(),
+            length.toLong()
+        )
         return a
     }
 
@@ -109,7 +124,12 @@ interface MemoryPointer {
         return getBytesUnsafe(ByteArray(length), srcByteOffset, 0, length)
     }
 
-    fun getShortsUnsafe(a: ShortArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): ShortArray {
+    fun getShortsUnsafe(
+        a: ShortArray,
+        srcByteOffset: Long = 0L,
+        dstByteOffset: Int = 0,
+        length: Int = a.size
+    ): ShortArray {
         UNSAFE.copyMemory(
             null,
             address + srcByteOffset,
@@ -125,7 +145,13 @@ interface MemoryPointer {
     }
 
     fun getIntsUnsafe(a: IntArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): IntArray {
-        UNSAFE.copyMemory(null, address + srcByteOffset, a, (INT_ARRAY_OFFSET + dstByteOffset).toLong(), (length * 4).toLong())
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (INT_ARRAY_OFFSET + dstByteOffset).toLong(),
+            (length * 4).toLong()
+        )
         return a
     }
 
@@ -133,8 +159,19 @@ interface MemoryPointer {
         return getIntsUnsafe(IntArray(length), srcByteOffset, 0, length)
     }
 
-    fun getLongsUnsafe(a: LongArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): LongArray {
-        UNSAFE.copyMemory(null, address + srcByteOffset, a, (LONG_ARRAY_OFFSET + dstByteOffset).toLong(), (length * 8).toLong())
+    fun getLongsUnsafe(
+        a: LongArray,
+        srcByteOffset: Long = 0L,
+        dstByteOffset: Int = 0,
+        length: Int = a.size
+    ): LongArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (LONG_ARRAY_OFFSET + dstByteOffset).toLong(),
+            (length * 8).toLong()
+        )
         return a
     }
 
@@ -142,7 +179,12 @@ interface MemoryPointer {
         return getLongsUnsafe(LongArray(length), srcByteOffset, 0, length)
     }
 
-    fun getFloatsUnsafe(a: FloatArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): FloatArray {
+    fun getFloatsUnsafe(
+        a: FloatArray,
+        srcByteOffset: Long = 0L,
+        dstByteOffset: Int = 0,
+        length: Int = a.size
+    ): FloatArray {
         UNSAFE.copyMemory(
             null,
             address + srcByteOffset,
@@ -157,7 +199,12 @@ interface MemoryPointer {
         return getFloatsUnsafe(FloatArray(length), srcByteOffset, 0, length)
     }
 
-    fun getDoublesUnsafe(a: DoubleArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): DoubleArray {
+    fun getDoublesUnsafe(
+        a: DoubleArray,
+        srcByteOffset: Long = 0L,
+        dstByteOffset: Int = 0,
+        length: Int = a.size
+    ): DoubleArray {
         UNSAFE.copyMemory(
             null,
             address + srcByteOffset,
@@ -174,68 +221,68 @@ interface MemoryPointer {
 
     // Safe bulk read access
     fun getBytes(a: ByteArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): ByteArray {
-        checkSrcByteIndexRange(srcByteOffset, length, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length)
         checkDstIndexRange(dstOffset, length, a.size)
         return getBytesUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getBytes(srcByteOffset: Long = 0L, length: Int = this.length.toInt()): ByteArray {
-        checkSrcByteIndexRange(srcByteOffset, length, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length)
         return getBytesUnsafe(srcByteOffset, length)
     }
 
     fun getShorts(a: ShortArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): ShortArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 2, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 2)
         checkDstIndexRange(dstOffset, length, a.size)
         return getShortsUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getShorts(srcByteOffset: Long = 0L, length: Int = (this.length / 2L).toInt()): ShortArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 2, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 2)
         return getShortsUnsafe(srcByteOffset, length)
     }
 
     fun getInts(a: IntArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): IntArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 4, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 4)
         checkDstIndexRange(dstOffset, length, a.size)
         return getIntsUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getInts(srcByteOffset: Long = 0L, length: Int = (this.length / 4L).toInt()): IntArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 4, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 4)
         return getIntsUnsafe(srcByteOffset, length)
     }
 
     fun getLongs(a: LongArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): LongArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 8, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 8)
         checkDstIndexRange(dstOffset, length, a.size)
         return getLongsUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getLongs(srcByteOffset: Long = 0L, length: Int = (this.length / 8L).toInt()): LongArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 8, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 8)
         return getLongsUnsafe(srcByteOffset, length)
     }
 
     fun getFloats(a: FloatArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): FloatArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 4, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 4)
         checkDstIndexRange(dstOffset, length, a.size)
         return getFloatsUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getFloats(srcByteOffset: Long = 0L, length: Int = (this.length / 4L).toInt()): FloatArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 4, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 4)
         return getFloatsUnsafe(srcByteOffset, length)
     }
 
     fun getDoubles(a: DoubleArray, srcByteOffset: Long = 0L, dstOffset: Int = 0, length: Int = a.size): DoubleArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 8, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 8)
         checkDstIndexRange(dstOffset, length, a.size)
         return getDoublesUnsafe(a, srcByteOffset, dstOffset, length)
     }
 
     fun getDoubles(srcByteOffset: Long = 0L, length: Int = (this.length / 8L).toInt()): DoubleArray {
-        checkSrcByteIndexRange(srcByteOffset, length * 8, this.length)
+        checkSrcByteIndexRange(srcByteOffset, length * 8)
         return getDoublesUnsafe(srcByteOffset, length)
     }
 
@@ -312,11 +359,23 @@ interface MemoryPointer {
     }
 
     fun setIntsUnsafe(a: IntArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size) {
-        UNSAFE.copyMemory(a, (INT_ARRAY_OFFSET + srcOffset).toLong(), null, address + dstByteOffset, (length * 4).toLong())
+        UNSAFE.copyMemory(
+            a,
+            (INT_ARRAY_OFFSET + srcOffset).toLong(),
+            null,
+            address + dstByteOffset,
+            (length * 4).toLong()
+        )
     }
 
     fun setLongsUnsafe(a: LongArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size) {
-        UNSAFE.copyMemory(a, (LONG_ARRAY_OFFSET + srcOffset).toLong(), null, address + dstByteOffset, (length * 8).toLong())
+        UNSAFE.copyMemory(
+            a,
+            (LONG_ARRAY_OFFSET + srcOffset).toLong(),
+            null,
+            address + dstByteOffset,
+            (length * 8).toLong()
+        )
     }
 
     fun setFloatsUnsafe(a: FloatArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size) {
@@ -342,42 +401,42 @@ interface MemoryPointer {
     // Safe bulk write access
     fun setBytes(a: ByteArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): ByteArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length, this.length)
+        checkDstByteIndexRange(dstByteOffset, length)
         setBytesUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
 
     fun setShorts(a: ShortArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): ShortArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length * 2, this.length)
+        checkDstByteIndexRange(dstByteOffset, length * 2)
         setShortsUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
 
     fun setInts(a: IntArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): IntArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length * 4, this.length)
+        checkDstByteIndexRange(dstByteOffset, length * 4)
         setIntsUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
 
     fun setLongs(a: LongArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): LongArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length * 8, this.length)
+        checkDstByteIndexRange(dstByteOffset, length * 8)
         setLongsUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
 
     fun setFloats(a: FloatArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): FloatArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length * 4, this.length)
+        checkDstByteIndexRange(dstByteOffset, length * 4)
         setFloatsUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
 
     fun setDoubles(a: DoubleArray, srcOffset: Int = 0, dstByteOffset: Long = 0L, length: Int = a.size): DoubleArray {
         checkSrcIndexRange(srcOffset, length, a.size)
-        checkDstByteIndexRange(dstByteOffset, length * 8, this.length)
+        checkDstByteIndexRange(dstByteOffset, length * 8)
         setDoublesUnsafe(a, srcOffset, dstByteOffset, length)
         return a
     }
@@ -402,26 +461,26 @@ interface MemoryPointer {
         }
     }
 
-    private fun checkSrcByteIndexRange(srcByteOffset: Long, length: Int, maxLength: Long) {
-        if (srcByteOffset < 0 || srcByteOffset >= maxLength) {
-            throw IndexOutOfBoundsException("srcByteOffset $srcByteOffset is out of bounds for length $maxLength")
+    private fun checkSrcIndexRange(srcOffset: Int, length: Int, maxLength: Int) {
+        if (srcOffset < 0 || srcOffset > maxLength) {
+            throw IndexOutOfBoundsException("srcOffset $srcOffset is out of bounds for length $maxLength")
         }
-        if (srcByteOffset + length > maxLength) {
+        if (length < 0 || srcOffset + length > maxLength) {
             throw IndexOutOfBoundsException("length $length is out of bounds for length $maxLength")
         }
     }
 
-    private fun checkSrcIndexRange(srcOffset: Int, length: Int, maxLength: Int) {
-        if (srcOffset < 0 || srcOffset >= maxLength) {
-            throw IndexOutOfBoundsException("srcOffset $srcOffset is out of bounds for length $maxLength")
+    private fun checkSrcByteIndexRange(srcByteOffset: Long, length: Int) {
+        if (srcByteOffset < 0 || srcByteOffset > this.length) {
+            throw IndexOutOfBoundsException("srcByteOffset $srcByteOffset is out of bounds for length ${this.length}")
         }
-        if (srcOffset + length > maxLength) {
-            throw IndexOutOfBoundsException("length $length is out of bounds for length $maxLength")
+        if (length < 0 || srcByteOffset + length > this.length) {
+            throw IndexOutOfBoundsException("length $length is out of bounds for length ${this.length}")
         }
     }
 
     private fun checkDstIndexRange(dstOffset: Int, length: Int, maxLength: Int) {
-        if (dstOffset < 0 || dstOffset >= maxLength) {
+        if (dstOffset < 0 || dstOffset > maxLength) {
             throw IndexOutOfBoundsException("dstOffset $dstOffset is out of bounds for length $maxLength")
         }
         if (length < 0 || dstOffset + length > maxLength) {
@@ -429,12 +488,12 @@ interface MemoryPointer {
         }
     }
 
-    private fun checkDstByteIndexRange(dstByteOffset: Long, length: Int, maxLength: Long) {
-        if (dstByteOffset < 0 || dstByteOffset >= maxLength) {
-            throw IndexOutOfBoundsException("dstByteOffset $dstByteOffset is out of bounds for length $maxLength")
+    private fun checkDstByteIndexRange(dstByteOffset: Long, length: Int) {
+        if (dstByteOffset < 0 || dstByteOffset > this.length) {
+            throw IndexOutOfBoundsException("dstByteOffset $dstByteOffset is out of bounds for length ${this.length}")
         }
-        if (length < 0 || dstByteOffset + length > maxLength) {
-            throw IndexOutOfBoundsException("length $length is out of bounds for length $maxLength")
+        if (length < 0 || dstByteOffset + length > this.length) {
+            throw IndexOutOfBoundsException("length $length is out of bounds for length ${this.length}")
         }
     }
 
@@ -493,15 +552,29 @@ internal class MemoryPointerImpl(address: Long, length: Long) : MemoryPointer {
         }
 }
 
-inline fun MemoryPointer.forEachByteUnsafe(byteOffset: Long = 0L, length: Long = this.length, block: (Byte) -> Unit) {
+inline fun MemoryPointer.forEachByteUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = this.length.toInt(),
+    block: (Byte) -> Unit
+) {
     for (i in 0L until length) {
         block(getByte(byteOffset + i))
     }
 }
 
+inline fun MemoryPointer.forEachByteIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = this.length.toInt(),
+    block: (Long, Byte) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getByte(byteOffset + i))
+    }
+}
+
 inline fun MemoryPointer.forEachShortUnsafe(
     byteOffset: Long = 0L,
-    length: Long = this.length / 2,
+    length: Int = (this.length / 2L).toInt(),
     block: (Short) -> Unit
 ) {
     for (i in 0L until length) {
@@ -509,15 +582,39 @@ inline fun MemoryPointer.forEachShortUnsafe(
     }
 }
 
-inline fun MemoryPointer.forEachIntUnsafe(byteOffset: Long = 0L, length: Long = this.length / 4, block: (Int) -> Unit) {
+inline fun MemoryPointer.forEachShortIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 2L).toInt(),
+    block: (Long, Short) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getShort(byteOffset + i * 2L))
+    }
+}
+
+inline fun MemoryPointer.forEachIntUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Int) -> Unit
+) {
     for (i in 0L until length) {
         block(getInt(byteOffset + i * 4L))
     }
 }
 
+inline fun MemoryPointer.forEachIntIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Long, Int) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getInt(byteOffset + i * 4L))
+    }
+}
+
 inline fun MemoryPointer.forEachLongUnsafe(
     byteOffset: Long = 0L,
-    length: Long = this.length / 8,
+    length: Int = (this.length / 8L).toInt(),
     block: (Long) -> Unit
 ) {
     for (i in 0L until length) {
@@ -525,9 +622,19 @@ inline fun MemoryPointer.forEachLongUnsafe(
     }
 }
 
+inline fun MemoryPointer.forEachLongIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Long, Long) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getLong(byteOffset + i * 8L))
+    }
+}
+
 inline fun MemoryPointer.forEachFloatUnsafe(
     byteOffset: Long = 0L,
-    length: Long = this.length / 4,
+    length: Int = (this.length / 4L).toInt(),
     block: (Float) -> Unit
 ) {
     for (i in 0L until length) {
@@ -535,9 +642,19 @@ inline fun MemoryPointer.forEachFloatUnsafe(
     }
 }
 
+inline fun MemoryPointer.forEachFloatIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Long, Float) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getFloat(byteOffset + i * 4L))
+    }
+}
+
 inline fun MemoryPointer.forEachDoubleUnsafe(
     byteOffset: Long = 0L,
-    length: Long = this.length / 8,
+    length: Int = (this.length / 8L).toInt(),
     block: (Double) -> Unit
 ) {
     for (i in 0L until length) {
@@ -545,45 +662,76 @@ inline fun MemoryPointer.forEachDoubleUnsafe(
     }
 }
 
-
-inline fun MemoryPointer.forEachByte(byteOffset: Long = 0L, length: Long = this.length, block: (Byte) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
+inline fun MemoryPointer.forEachDoubleIndexedUnsafe(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Long, Double) -> Unit
+) {
+    for (i in 0L until length) {
+        block(i, getDouble(byteOffset + i * 8L))
     }
+}
+
+
+inline fun MemoryPointer.forEachByte(
+    byteOffset: Long = 0L,
+    length: Int = this.length.toInt(),
+    block: (Byte) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 1)
     forEachByteUnsafe(byteOffset, length, block)
 }
 
-inline fun MemoryPointer.forEachShort(byteOffset: Long = 0L, length: Long = this.length / 2, block: (Short) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
-    }
+inline fun MemoryPointer.forEachShort(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 2L).toInt(),
+    block: (Short) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 2)
     forEachShortUnsafe(byteOffset, length, block)
 }
 
-inline fun MemoryPointer.forEachInt(byteOffset: Long = 0L, length: Long = this.length / 4, block: (Int) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
-    }
+inline fun MemoryPointer.forEachInt(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Int) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 4)
     forEachIntUnsafe(byteOffset, length, block)
 }
 
-inline fun MemoryPointer.forEachLong(byteOffset: Long = 0L, length: Long = this.length / 8, block: (Long) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
-    }
+inline fun MemoryPointer.forEachLong(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Long) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 8)
     forEachLongUnsafe(byteOffset, length, block)
 }
 
-inline fun MemoryPointer.forEachFloat(byteOffset: Long = 0L, length: Long = this.length / 4, block: (Float) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
-    }
+inline fun MemoryPointer.forEachFloat(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 4L).toInt(),
+    block: (Float) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 4)
     forEachFloatUnsafe(byteOffset, length, block)
 }
 
-inline fun MemoryPointer.forEachDouble(byteOffset: Long = 0L, length: Long = this.length / 8, block: (Double) -> Unit) {
-    if (byteOffset < 0L || byteOffset + length > this.length) {
+inline fun MemoryPointer.forEachDouble(
+    byteOffset: Long = 0L,
+    length: Int = (this.length / 8L).toInt(),
+    block: (Double) -> Unit
+) {
+    checkForeachIndexRange(byteOffset, length , 8)
+    forEachDoubleUnsafe(byteOffset, length, block)
+}
+
+fun MemoryPointer.checkForeachIndexRange(byteOffset: Long, length: Int, unitSize: Int) {
+    if (byteOffset < 0L || byteOffset > this.length) {
         throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
     }
-    forEachDoubleUnsafe(byteOffset, length, block)
+    if (length < 0 || byteOffset + length * unitSize > this.length) {
+        throw IndexOutOfBoundsException("length $length is out of bounds for offset $byteOffset")
+    }
 }

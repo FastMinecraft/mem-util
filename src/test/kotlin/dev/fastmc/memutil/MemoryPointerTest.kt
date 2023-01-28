@@ -7,7 +7,7 @@ import kotlin.test.assertFailsWith
 
 class MemoryPointerTest {
     private val testDataSize = 1000
-    
+
     @Test
     fun testProperties() {
         val pointer = MemoryPointer.malloc(0L)
@@ -60,457 +60,135 @@ class MemoryPointerTest {
     }
 
     @Test
-    fun testReadIndexExceptionSingle() {
+    fun testCheckOffset() {
         val pointer = MemoryPointer.malloc(8L)
 
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getByte(-1)
+        val checkOffsetMethod = MemoryPointer::class.java.getDeclaredMethod(
+            "checkOffset",
+            Long::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        checkOffsetMethod.isAccessible = true
+
+        val checkOffset: MemoryPointer.(Long, Int) -> Unit = { offset, size ->
+            runCatching {
+                checkOffsetMethod.invoke(this, offset, size)
+            }.onFailure {
+                throw it.cause!!
+            }
+        }
+
+        assertDoesNotThrow {
+            pointer.checkOffset(0, 1)
+            pointer.checkOffset(0, 4)
+            pointer.checkOffset(7, 1)
+            pointer.checkOffset(4, 4)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getByte(8)
+            checkOffset(pointer, -1, 1)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShort(-1)
+            checkOffset(pointer, -1, 4)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShort(8)
+            checkOffset(pointer, 8, 1)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInt(-1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInt(8)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLong(-1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLong(8)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloat(-1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloat(8)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDouble(-1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDouble(8)
+            checkOffset(pointer, 5, 4)
         }
 
         pointer.free()
     }
 
-    @Test
-    fun testWriteIndexExceptionSingle() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setByte(0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setByte(-1, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setByte(8, 0)
-        }
-        assertDoesNotThrow {
-            pointer.setShort(0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShort(-1, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShort(8, 0)
-        }
-        assertDoesNotThrow {
-            pointer.setInt(0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInt(-1, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInt(8, 0)
-        }
-        assertDoesNotThrow {
-            pointer.setLong(0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLong(-1, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLong(8, 0)
-        }
-        assertDoesNotThrow {
-            pointer.setFloat(0, 0f)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloat(-1, 0f)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloat(8, 0f)
-        }
-        assertDoesNotThrow {
-            pointer.setDouble(0, 0.0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDouble(-1, 0.0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDouble(8, 0.0)
-        }
-
-        pointer.free()
+    fun foo() {
+        val checkDstIndexRange = MemoryPointer::class.java.getDeclaredMethod(
+            "checkDstIndexRange",
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        checkDstIndexRange.isAccessible = true
+        val checkDstByteIndexRange = MemoryPointer::class.java.getDeclaredMethod(
+            "checkDstByteIndexRange",
+            Long::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Long::class.javaPrimitiveType
+        )
+        checkDstByteIndexRange.isAccessible = true
     }
 
     @Test
-    fun testByteBulkReadIndexException() {
+    fun checkIndexRange() {
         val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.getBytes(ByteArray(1), 0, 0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), 8, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getBytes(ByteArray(1), 0, 0, 2)
-        }
-
+        testCheckIndexRange(getCheckIndexRange("checkSrcIndexRange"), pointer)
+        testCheckIndexRange(getCheckByteIndexRange("checkSrcByteIndexRange"), pointer)
+        testCheckIndexRange(getCheckIndexRange("checkDstIndexRange"), pointer)
+        testCheckIndexRange(getCheckByteIndexRange("checkDstByteIndexRange"), pointer)
         pointer.free()
     }
 
-    @Test
-    fun testShortBulkReadIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
+    private fun getCheckByteIndexRange(name: String): MemoryPointer.(Int, Int) -> Unit {
+        val checkSrcByteIndexRangeMethod = MemoryPointer::class.java.getDeclaredMethod(
+            name,
+            Long::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        checkSrcByteIndexRangeMethod.isAccessible = true
 
-        assertDoesNotThrow {
-            pointer.getShorts(ShortArray(1), 0, 0, 1)
+        val checkSrcByteIndexRange: MemoryPointer.(Int, Int) -> Unit = { srcIndex, length ->
+            runCatching {
+                checkSrcByteIndexRangeMethod.invoke(this, srcIndex, length)
+            }.onFailure {
+                throw it.cause!!
+            }
         }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), 8, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getShorts(ShortArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
+        return checkSrcByteIndexRange
     }
 
-    @Test
-    fun testIntBulkReadIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
+    private fun getCheckIndexRange(name: String): MemoryPointer.(Int, Int) -> Unit {
+        val checkSrcIndexRangeMethod = MemoryPointer::class.java.getDeclaredMethod(
+            name,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        checkSrcIndexRangeMethod.isAccessible = true
 
-        assertDoesNotThrow {
-            pointer.getInts(IntArray(1), 0, 0, 1)
+        val checkSrcIndexRange: MemoryPointer.(Int, Int) -> Unit = { srcIndex, length ->
+            runCatching {
+                checkSrcIndexRangeMethod.invoke(this, srcIndex, length, 8)
+            }.onFailure {
+                throw it.cause!!
+            }
         }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), 8, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getInts(IntArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
+        return checkSrcIndexRange
     }
 
-    @Test
-    fun testLongBulkReadIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
+    private fun testCheckIndexRange(
+        checkIndexRange: MemoryPointer.(Int, Int) -> Unit,
+        pointer: MemoryPointer
+    ) {
         assertDoesNotThrow {
-            pointer.getLongs(LongArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), 8, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getLongs(LongArray(1), 0, 0, 2)
+            checkIndexRange(pointer, 0, 0)
+            checkIndexRange(pointer, 0, 1)
+            checkIndexRange(pointer, 0, 8)
+            checkIndexRange(pointer, 7, 1)
+            checkIndexRange(pointer, 3, 4)
+            checkIndexRange(pointer, 8, 0)
         }
 
-        pointer.free()
-    }
-
-    @Test
-    fun testFloatBulkReadIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.getFloats(FloatArray(1), 0, 0, 1)
+        assertFailsWith(IndexOutOfBoundsException::class) {
+            checkIndexRange(pointer, -1, 1)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), -1, 0, 1)
+            checkIndexRange(pointer, 9, 1)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), 8, 0, 1)
+            checkIndexRange(pointer, 0, -1)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), 0, -1, 1)
+            checkIndexRange(pointer, 0, 9)
         }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getFloats(FloatArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testDoubleBulkReadIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.getDoubles(DoubleArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), 8, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), 0, 1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.getDoubles(DoubleArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testByteBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setBytes(ByteArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setBytes(ByteArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testShortBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setShorts(ShortArray(1), 0, 0, 0)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setShorts(ShortArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testIntBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setInts(IntArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setInts(IntArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testLongBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setLongs(LongArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setLongs(LongArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testFloatBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setFloats(FloatArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setFloats(FloatArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
-    }
-
-    @Test
-    fun testDoubleBulkWriteIndexException() {
-        val pointer = MemoryPointer.malloc(8L)
-
-        assertDoesNotThrow {
-            pointer.setDoubles(DoubleArray(1), 0, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), -1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), 1, 0, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), 0, -1, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), 0, 8, 1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), 0, 0, -1)
-        }
-        assertFailsWith(IndexOutOfBoundsException::class) {
-            pointer.setDoubles(DoubleArray(1), 0, 0, 2)
-        }
-
-        pointer.free()
     }
 
     @Test
@@ -723,7 +401,7 @@ class MemoryPointerTest {
 
         pointer.free()
     }
-    
+
     private fun randomBytes(): ByteArray {
         val random = Random()
         val array = ByteArray(testDataSize)
