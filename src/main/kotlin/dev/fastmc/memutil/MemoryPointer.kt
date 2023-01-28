@@ -445,7 +445,7 @@ interface MemoryPointer : AutoCloseable {
         if (offset < 0L || offset + length > this.length) {
             throw IndexOutOfBoundsException("offset $offset is out of bounds for length $length")
         }
-        return MemoryList.wrap(this, offset, length)
+        return MemoryArray.wrap(this, offset, length)
     }
 
     fun ensureCapacity(capacity: Long) {
@@ -529,11 +529,11 @@ interface MemoryPointer : AutoCloseable {
 
 internal class WrappedPointer(address: Long, length: Long) : MemoryPointer {
     override var address = address
-        set(value) {
+        set(_) {
             throw UnsupportedOperationException("Cannot change address of a wrapped pointer")
         }
     override var length = length
-        set(value) {
+        set(_) {
             throw UnsupportedOperationException("Cannot change length of a wrapped pointer")
         }
 
@@ -791,9 +791,9 @@ inline fun MemoryPointer.forEachDoubleIndexed(
 
 fun MemoryPointer.checkForeachIndexRange(byteOffset: Long, length: Int, unitSize: Int) {
     if (byteOffset < 0L || byteOffset > this.length) {
-        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length $length")
+        throw IndexOutOfBoundsException("offset $byteOffset is out of bounds for length ${this.length}")
     }
     if (length < 0 || byteOffset + length * unitSize > this.length) {
-        throw IndexOutOfBoundsException("length $length is out of bounds for offset $byteOffset")
+        throw IndexOutOfBoundsException("length $length is out of bounds for offset ${this.length}")
     }
 }
