@@ -1,41 +1,102 @@
 package dev.fastmc.memutil
 
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFailsWith
 
 class MemoryStackTest {
     @Test
     fun testManualPop() {
+        MemoryStack.initAndGet().checkEmpty()
+
         MemoryStack {
             val a = malloc(4)
             val b = malloc(8)
             val c = malloc(12)
+
+            assertFailsWith(IllegalStateException::class) {
+                MemoryStack.get().checkEmpty()
+            }
+
             c.close()
             b.close()
             a.close()
         }
+
+        MemoryStack.get().checkEmpty()
     }
 
     @Test
     fun testAutoPop() {
+        MemoryStack.initAndGet().checkEmpty()
+
         MemoryStack {
             malloc(4)
             malloc(8)
             malloc(12)
+
+            assertFailsWith(IllegalStateException::class) {
+                MemoryStack.get().checkEmpty()
+            }
         }
+
+        MemoryStack.get().checkEmpty()
 
         MemoryStack {
             malloc(4).use {
                 malloc(8).use {
                     malloc(12).use {
-                        // Do nothing
+                        assertFailsWith(IllegalStateException::class) {
+                            MemoryStack.get().checkEmpty()
+                        }
                     }
                 }
             }
         }
+
+        MemoryStack.get().checkEmpty()
+    }
+
+    @Test
+    fun testCascadeStack() {
+        MemoryStack.initAndGet().checkEmpty()
+
+        MemoryStack {
+            malloc(4)
+            malloc(8)
+            malloc(12)
+
+            assertFailsWith(IllegalStateException::class) {
+                MemoryStack.get().checkEmpty()
+            }
+
+            MemoryStack {
+                malloc(8)
+                malloc(16)
+                malloc(32)
+
+                assertFailsWith(IllegalStateException::class) {
+                    MemoryStack.get().checkEmpty()
+                }
+
+                MemoryStack {
+                    malloc(16)
+                    malloc(32)
+                    malloc(64)
+
+                    assertFailsWith(IllegalStateException::class) {
+                        MemoryStack.get().checkEmpty()
+                    }
+                }
+            }
+        }
+
+        MemoryStack.get().checkEmpty()
     }
 
     @Test
     fun testStackLength() {
+        MemoryStack.initAndGet().checkEmpty()
+
         MemoryStack {
             val a = malloc(4)
             val b = malloc(1)
@@ -46,11 +107,19 @@ class MemoryStackTest {
             assert(b.length == 1L)
             assert(c.length == 15L)
             assert(d.length == 8L)
+
+            assertFailsWith(IllegalStateException::class) {
+                MemoryStack.get().checkEmpty()
+            }
         }
+
+        MemoryStack.get().checkEmpty()
     }
 
     @Test
     fun testStackAddress() {
+        MemoryStack.initAndGet().checkEmpty()
+
         val baseField = MemoryStack::class.java.getDeclaredField("base")
         baseField.isAccessible = true
         MemoryStack {
@@ -76,6 +145,8 @@ class MemoryStackTest {
 
     @Test
     fun testCalloc() {
+        MemoryStack.initAndGet().checkEmpty()
+
         MemoryStack {
             calloc(1024).use {
                 for (i in 0 until 1024) {

@@ -2,12 +2,14 @@ package dev.fastmc.memutil
 
 import java.util.*
 
-class MemoryStack private constructor(initCapacity: Long): AutoCloseable {
+class MemoryStack private constructor(initCapacity: Long) : AutoCloseable {
     private val base = MemoryPointer.malloc(initCapacity)
     private var baseOffset = 0L
 
     private val framesPool = ArrayDeque<Frame>()
     private val frameStack = ArrayDeque<Frame>()
+    private val stackCount = IntArray(16)
+    private var stackCountPointer = 0
 
     private fun newFrame(): Frame {
         return framesPool.pollLast() ?: Frame(WrappedMemoryArray(base))
@@ -25,6 +27,7 @@ class MemoryStack private constructor(initCapacity: Long): AutoCloseable {
         frame.delegated.offset = baseOffset
         frame.delegated.length = size
         baseOffset = newOffset
+        stackCount[stackCountPointer - 1]++
         return frame
     }
 
@@ -34,24 +37,35 @@ class MemoryStack private constructor(initCapacity: Long): AutoCloseable {
         return frame
     }
 
-    fun init() {
-        require(frameStack.isEmpty()) { "Memory stack is not empty" }
-        assert(baseOffset == 0L)
+    fun push(): MemoryStack {
+        assert(stackCountPointer >= 0)
+        stackCountPointer++
+        return this
     }
 
     override fun close() {
-        var frame = frameStack.pollLast()
-        while (frame != null) {
-            freeFrame(frame)
-            baseOffset -= frame.length
-            frame = frameStack.pollLast()
+        check(stackCountPointer > 0) { "Memory stack is empty: stackCountPointer=$stackCountPointer" }
+        val count = stackCount[stackCountPointer - 1]
+        repeat(count) {
+            frameStack.peekLast().close()
         }
-        assert(baseOffset == 0L)
+        stackCountPointer--
     }
 
-    inner class Frame internal constructor(internal val delegated: WrappedMemoryArray) : MemoryArray by delegated, AutoCloseable {
+    fun checkEmpty() {
+        check(frameStack.isEmpty()) { "Memory stack is not empty" }
+        check(stackCountPointer >= 0) { "Memory stack is not empty: stackCountPointer=$stackCountPointer" }
+    }
+
+    fun free() {
+        base.free()
+    }
+
+    inner class Frame internal constructor(internal val delegated: WrappedMemoryArray) : MemoryArray by delegated,
+        AutoCloseable {
         override fun close() {
             check(frameStack.pollLast() === this) { "Frame stack is corrupted" }
+            stackCount[stackCountPointer - 1]--
             baseOffset -= length
             freeFrame(this)
         }
@@ -60,15 +74,22 @@ class MemoryStack private constructor(initCapacity: Long): AutoCloseable {
     companion object {
         private val threadLocal = ThreadLocal.withInitial { MemoryStack(1024L * 1024L) }
 
+        internal fun initAndGet(): MemoryStack {
+            return synchronized(threadLocal) {
+                val new = MemoryStack(1024L * 1024L)
+                val prev = threadLocal.get()
+                threadLocal.set(new)
+                prev?.free()
+                new
+            }
+        }
+
         fun get(): MemoryStack {
             return threadLocal.get()
         }
 
         inline operator fun <T> invoke(crossinline block: MemoryStack.() -> T): T {
-            return get().use {
-                it.init()
-                block(it)
-            }
+            return get().push().use(block)
         }
     }
 }
