@@ -1,13 +1,17 @@
 package dev.fastmc.memutil
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
 
 class MemoryStackTest {
+    @BeforeEach
+    fun setup() {
+        MemoryStack.initAndGet().checkEmpty()
+    }
+
     @Test
     fun testManualPop() {
-        MemoryStack.initAndGet().checkEmpty()
-
         MemoryStack {
             val a = malloc(4)
             val b = malloc(8)
@@ -27,8 +31,6 @@ class MemoryStackTest {
 
     @Test
     fun testAutoPop() {
-        MemoryStack.initAndGet().checkEmpty()
-
         MemoryStack {
             malloc(4)
             malloc(8)
@@ -58,8 +60,6 @@ class MemoryStackTest {
 
     @Test
     fun testCascadeStack() {
-        MemoryStack.initAndGet().checkEmpty()
-
         MemoryStack {
             malloc(4)
             malloc(8)
@@ -95,8 +95,6 @@ class MemoryStackTest {
 
     @Test
     fun testStackLength() {
-        MemoryStack.initAndGet().checkEmpty()
-
         MemoryStack {
             val a = malloc(4)
             val b = malloc(1)
@@ -118,8 +116,6 @@ class MemoryStackTest {
 
     @Test
     fun testStackAddress() {
-        MemoryStack.initAndGet().checkEmpty()
-
         val baseField = MemoryStack::class.java.getDeclaredField("base")
         baseField.isAccessible = true
         MemoryStack {
@@ -145,8 +141,6 @@ class MemoryStackTest {
 
     @Test
     fun testCalloc() {
-        MemoryStack.initAndGet().checkEmpty()
-
         MemoryStack {
             calloc(1024).use {
                 for (i in 0 until 1024) {

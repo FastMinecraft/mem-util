@@ -415,7 +415,7 @@ class JomlUtilTest {
 
         @JvmStatic
         @BeforeAll
-        fun init() {
+        fun setup() {
             System.setProperty("joml.format", "false")
         }
 
