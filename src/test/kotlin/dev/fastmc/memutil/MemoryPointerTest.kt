@@ -3,6 +3,7 @@ package dev.fastmc.memutil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.*
 import kotlin.test.assertFailsWith
 
@@ -90,18 +91,28 @@ class MemoryPointerTest {
 
     @Test
     fun testNioBufferWrapping() {
-        val buffer = ByteBuffer.allocateDirect(TestUtils.TEST_DATA_SIZE)
+        val buffer = ByteBuffer.allocateDirect(TestUtils.TEST_DATA_SIZE * 4)
+        buffer.order(ByteOrder.nativeOrder())
         val pointer = MemoryPointer.wrap(buffer)
 
         assertFailsWith(UnsupportedOperationException::class) {
             pointer.free()
         }
 
-        val a = TestUtils.randomBytes()
-        buffer.put(a)
+        val a = TestUtils.randomInts()
+        buffer.asIntBuffer().put(a)
 
         for (i in a.indices) {
-            assert(pointer.getByteUnsafe(i.toLong()) == a[i])
+            assert(pointer.getIntUnsafe(i * 4L) == a[i])
+            assert(pointer.getIntUnsafe(i * 4L) == buffer.getInt(i * 4))
+        }
+
+        val b = TestUtils.randomInts()
+        pointer.setIntsUnsafe(b)
+
+        for (i in b.indices) {
+            assert(buffer.getInt(i * 4) == b[i])
+            assert(buffer.getInt(i * 4) == pointer.getIntUnsafe(i * 4L))
         }
     }
 

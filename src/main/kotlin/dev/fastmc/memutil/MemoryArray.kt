@@ -141,7 +141,7 @@ interface MemoryArray : MemoryPointer {
 
     companion object {
         @JvmStatic
-        fun wrap(buffer: Buffer): MemoryPointer {
+        fun wrap(buffer: Buffer): MemoryArray {
             require(buffer.isDirect) { "Buffer must be direct" }
             return wrap(buffer.address, buffer.byteCapacity)
         }

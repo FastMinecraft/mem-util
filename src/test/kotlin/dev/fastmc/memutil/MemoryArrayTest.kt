@@ -2,6 +2,8 @@ package dev.fastmc.memutil
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.test.assertFailsWith
 
 class MemoryArrayTest {
@@ -26,23 +28,50 @@ class MemoryArrayTest {
             MemoryArray.wrap(-1, 0)
         }
 
-        val address = UNSAFE.allocateMemory(TestUtils.TEST_DATA_SIZE.toLong())
-        val memArray = MemoryArray.wrap(address, TestUtils.TEST_DATA_SIZE.toLong())
+        val address = UNSAFE.allocateMemory(TestUtils.TEST_DATA_SIZE * 4L)
+        val memArray = MemoryArray.wrap(address, TestUtils.TEST_DATA_SIZE * 4L)
         assert(memArray.address == address)
-        assert(memArray.length == TestUtils.TEST_DATA_SIZE.toLong())
+        assert(memArray.length == TestUtils.TEST_DATA_SIZE * 4L)
 
         assertFailsWith(UnsupportedOperationException::class) {
             memArray.free()
         }
 
-        val a = TestUtils.randomBytes()
-        memArray.pushBytes(a)
+        val a = TestUtils.randomInts()
+        memArray.pushInts(a)
 
         for (i in a.indices) {
-            assert(memArray.getByteUnsafe(i.toLong()) == a[i])
+            assert(memArray.getIntUnsafe(i * 4L) == a[i])
         }
 
         UNSAFE.freeMemory(address)
+    }
+
+    @Test
+    fun testNioBufferWrapping() {
+        val buffer = ByteBuffer.allocateDirect(TestUtils.TEST_DATA_SIZE * 4)
+        buffer.order(ByteOrder.nativeOrder())
+        val memArray = MemoryArray.wrap(buffer)
+
+        val a = TestUtils.randomInts()
+        buffer.asIntBuffer().put(a)
+        memArray.pointer += a.size * 4L
+
+        for (i in a.indices.reversed()) {
+            val v = memArray.popInt()
+            assert(v == a[i])
+            assert(v == buffer.getInt(i * 4))
+        }
+
+        assert(memArray.pointer == 0L)
+
+        val b = TestUtils.randomInts()
+        memArray.pushInts(b)
+
+        for (i in b.indices.reversed()) {
+            assert(buffer.getInt(i * 4) == b[i])
+            assert(buffer.getInt(i * 4) == memArray.popInt())
+        }
     }
 
     @Test
@@ -163,11 +192,11 @@ class MemoryArrayTest {
         val doubles = TestUtils.randomDoubles()
         val memArray = MemoryArray.malloc(
             bytes.size.toLong() +
-            shorts.size.toLong() * 2 +
-            ints.size.toLong() * 4 +
-            longs.size.toLong() * 8 +
-            floats.size.toLong() * 4 +
-            doubles.size.toLong() * 8
+                shorts.size.toLong() * 2 +
+                ints.size.toLong() * 4 +
+                longs.size.toLong() * 8 +
+                floats.size.toLong() * 4 +
+                doubles.size.toLong() * 8
         )
 
         for (i in bytes.indices) {
@@ -456,11 +485,11 @@ class MemoryArrayTest {
         val doubles = TestUtils.randomDoubles()
         val memArray = MemoryArray.malloc(
             bytes.size.toLong() +
-            shorts.size.toLong() * 2 +
-            ints.size.toLong() * 4 +
-            longs.size.toLong() * 8 +
-            floats.size.toLong() * 4 +
-            doubles.size.toLong() * 8
+                shorts.size.toLong() * 2 +
+                ints.size.toLong() * 4 +
+                longs.size.toLong() * 8 +
+                floats.size.toLong() * 4 +
+                doubles.size.toLong() * 8
         )
 
         for (i in bytes.indices) {
