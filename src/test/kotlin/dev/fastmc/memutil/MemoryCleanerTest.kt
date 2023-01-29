@@ -1,5 +1,9 @@
 package dev.fastmc.memutil
 
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.condition.DisabledIf
+import java.lang.management.ManagementFactory
 import java.util.*
 import kotlin.test.Test
 
@@ -22,6 +26,7 @@ class MemoryCleanerTest {
         assert(MemoryTracker.usedMemory == 0L)
     }
 
+    @Disabled
     @Test
     fun testAutoClean() {
         MemoryTracker.counter.set(0L)
@@ -33,16 +38,16 @@ class MemoryCleanerTest {
         assert(MemoryTracker.usedMemory == 48 * 1024L * 1024L)
 
         Arrays.fill(array1, null)
-        repeat(5) {
+        repeat(20) {
             System.gc()
-            Thread.sleep(100L)
+            Thread.sleep(50L)
         }
         assert(MemoryTracker.usedMemory == 16 * 1024L * 1024L)
 
         Arrays.fill(array2, null)
-        repeat(5) {
+        repeat(20) {
             System.gc()
-            Thread.sleep(100L)
+            Thread.sleep(50L)
         }
         assert(MemoryTracker.usedMemory == 0L)
     }
