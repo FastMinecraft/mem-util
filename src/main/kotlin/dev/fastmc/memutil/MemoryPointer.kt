@@ -79,15 +79,7 @@ interface MemoryPointer : AutoCloseable {
         return UNSAFE.getByte(address + offset)
     }
 
-    fun getByteUnsafe(offset: Int): Byte {
-        return UNSAFE.getByte(address + offset)
-    }
-
     fun getShortUnsafe(offset: Long): Short {
-        return UNSAFE.getShort(address + offset)
-    }
-
-    fun getShortUnsafe(offset: Int): Short {
         return UNSAFE.getShort(address + offset)
     }
 
@@ -95,15 +87,7 @@ interface MemoryPointer : AutoCloseable {
         return UNSAFE.getInt(address + offset)
     }
 
-    fun getIntUnsafe(offset: Int): Int {
-        return UNSAFE.getInt(address + offset)
-    }
-
     fun getLongUnsafe(offset: Long): Long {
-        return UNSAFE.getLong(address + offset)
-    }
-
-    fun getLongUnsafe(offset: Int): Long {
         return UNSAFE.getLong(address + offset)
     }
 
@@ -111,46 +95,38 @@ interface MemoryPointer : AutoCloseable {
         return UNSAFE.getFloat(address + offset)
     }
 
-    fun getFloatUnsafe(offset: Int): Float {
-        return UNSAFE.getFloat(address + offset)
-    }
-
     fun getDoubleUnsafe(offset: Long): Double {
-        return UNSAFE.getDouble(address + offset)
-    }
-
-    fun getDoubleUnsafe(offset: Int): Double {
         return UNSAFE.getDouble(address + offset)
     }
 
     // Safe single read access
     fun getByte(offset: Long): Byte {
-        checkOffset(offset, 1)
+        checkOffset(offset, 1L)
         return getByteUnsafe(offset)
     }
 
     fun getShort(offset: Long): Short {
-        checkOffset(offset, 2)
+        checkOffset(offset, 2L)
         return getShortUnsafe(offset)
     }
 
     fun getInt(offset: Long): Int {
-        checkOffset(offset, 4)
+        checkOffset(offset, 4L)
         return getIntUnsafe(offset)
     }
 
     fun getLong(offset: Long): Long {
-        checkOffset(offset, 8)
+        checkOffset(offset, 8L)
         return getLongUnsafe(offset)
     }
 
     fun getFloat(offset: Long): Float {
-        checkOffset(offset, 4)
+        checkOffset(offset, 4L)
         return getFloatUnsafe(offset)
     }
 
     fun getDouble(offset: Long): Double {
-        checkOffset(offset, 8)
+        checkOffset(offset, 8L)
         return getDoubleUnsafe(offset)
     }
 
@@ -158,15 +134,95 @@ interface MemoryPointer : AutoCloseable {
     fun getBytesUnsafe(
         a: ByteArray,
         srcByteOffset: Long = 0L,
-        dstByteOffset: Int = 0,
+        dstOffset: Int = 0,
         length: Int = a.size
     ): ByteArray {
         UNSAFE.copyMemory(
             null,
             address + srcByteOffset,
             a,
-            (BYTE_ARRAY_OFFSET + dstByteOffset).toLong(),
+            (BYTE_ARRAY_OFFSET + dstOffset).toLong(),
             length.toLong()
+        )
+        return a
+    }
+
+    fun getShortsUnsafe(
+        a: ShortArray,
+        srcByteOffset: Long = 0L,
+        dstOffset: Int = 0,
+        length: Int = a.size
+    ): ShortArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (SHORT_ARRAY_OFFSET + dstOffset).toLong(),
+            (length * 2).toLong()
+        )
+        return a
+    }
+
+    fun getIntsUnsafe(
+        a: IntArray,
+        srcByteOffset: Long = 0L,
+        dstOffset: Int = 0,
+        length: Int = a.size
+    ): IntArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (INT_ARRAY_OFFSET + dstOffset).toLong(),
+            (length * 4).toLong()
+        )
+        return a
+    }
+
+    fun getLongsUnsafe(
+        a: LongArray,
+        srcByteOffset: Long = 0L,
+        dstOffset: Int = 0,
+        length: Int = a.size
+    ): LongArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (LONG_ARRAY_OFFSET + dstOffset).toLong(),
+            (length * 8).toLong()
+        )
+        return a
+    }
+
+    fun getFloatsUnsafe(
+        a: FloatArray,
+        srcByteOffset: Long = 0L,
+        dstOffset: Int = 0,
+        length: Int = a.size
+    ): FloatArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (FLOAT_ARRAY_OFFSET + dstOffset).toLong(),
+            (length * 4).toLong()
+        )
+        return a
+    }
+
+    fun getDoublesUnsafe(
+        a: DoubleArray,
+        srcByteOffset: Long = 0L,
+        dstOffset: Int = 0,
+        length: Int = a.size
+    ): DoubleArray {
+        UNSAFE.copyMemory(
+            null,
+            address + srcByteOffset,
+            a,
+            (DOUBLE_ARRAY_OFFSET + dstOffset).toLong(),
+            (length * 8).toLong()
         )
         return a
     }
@@ -175,95 +231,20 @@ interface MemoryPointer : AutoCloseable {
         return getBytesUnsafe(ByteArray(length), srcByteOffset, 0, length)
     }
 
-    fun getShortsUnsafe(
-        a: ShortArray,
-        srcByteOffset: Long = 0L,
-        dstByteOffset: Int = 0,
-        length: Int = a.size
-    ): ShortArray {
-        UNSAFE.copyMemory(
-            null,
-            address + srcByteOffset,
-            a,
-            (SHORT_ARRAY_OFFSET + dstByteOffset).toLong(),
-            (length * 2).toLong()
-        )
-        return a
-    }
-
     fun getShortsUnsafe(srcByteOffset: Long = 0L, length: Int = (this.length / 2L).toInt()): ShortArray {
         return getShortsUnsafe(ShortArray(length), srcByteOffset, 0, length)
-    }
-
-    fun getIntsUnsafe(a: IntArray, srcByteOffset: Long = 0L, dstByteOffset: Int = 0, length: Int = a.size): IntArray {
-        UNSAFE.copyMemory(
-            null,
-            address + srcByteOffset,
-            a,
-            (INT_ARRAY_OFFSET + dstByteOffset).toLong(),
-            (length * 4).toLong()
-        )
-        return a
     }
 
     fun getIntsUnsafe(srcByteOffset: Long = 0L, length: Int = (this.length / 4L).toInt()): IntArray {
         return getIntsUnsafe(IntArray(length), srcByteOffset, 0, length)
     }
 
-    fun getLongsUnsafe(
-        a: LongArray,
-        srcByteOffset: Long = 0L,
-        dstByteOffset: Int = 0,
-        length: Int = a.size
-    ): LongArray {
-        UNSAFE.copyMemory(
-            null,
-            address + srcByteOffset,
-            a,
-            (LONG_ARRAY_OFFSET + dstByteOffset).toLong(),
-            (length * 8).toLong()
-        )
-        return a
-    }
-
     fun getLongsUnsafe(srcByteOffset: Long = 0L, length: Int = (this.length / 8L).toInt()): LongArray {
         return getLongsUnsafe(LongArray(length), srcByteOffset, 0, length)
     }
 
-    fun getFloatsUnsafe(
-        a: FloatArray,
-        srcByteOffset: Long = 0L,
-        dstByteOffset: Int = 0,
-        length: Int = a.size
-    ): FloatArray {
-        UNSAFE.copyMemory(
-            null,
-            address + srcByteOffset,
-            a,
-            (FLOAT_ARRAY_OFFSET + dstByteOffset).toLong(),
-            (length * 4).toLong()
-        )
-        return a
-    }
-
     fun getFloatsUnsafe(srcByteOffset: Long = 0L, length: Int = (this.length / 4L).toInt()): FloatArray {
         return getFloatsUnsafe(FloatArray(length), srcByteOffset, 0, length)
-    }
-
-    fun getDoublesUnsafe(
-        a: DoubleArray,
-        srcByteOffset: Long = 0L,
-        dstByteOffset: Int = 0,
-        length: Int = a.size
-    ): DoubleArray {
-        UNSAFE.copyMemory(
-            null,
-            address + srcByteOffset,
-            a,
-            (DOUBLE_ARRAY_OFFSET + dstByteOffset).toLong(),
-            (length * 8).toLong()
-        )
-        return a
     }
 
     fun getDoublesUnsafe(srcByteOffset: Long = 0L, length: Int = (this.length / 8L).toInt()): DoubleArray {
@@ -365,32 +346,32 @@ interface MemoryPointer : AutoCloseable {
 
     // Safe single write access
     fun setByte(offset: Long, value: Byte) {
-        checkOffset(offset, 1)
+        checkOffset(offset, 1L)
         setByteUnsafe(offset, value)
     }
 
     fun setShort(offset: Long, value: Short) {
-        checkOffset(offset, 2)
+        checkOffset(offset, 2L)
         setShortUnsafe(offset, value)
     }
 
     fun setInt(offset: Long, value: Int) {
-        checkOffset(offset, 4)
+        checkOffset(offset, 4L)
         setIntUnsafe(offset, value)
     }
 
     fun setLong(offset: Long, value: Long) {
-        checkOffset(offset, 8)
+        checkOffset(offset, 8L)
         setLongUnsafe(offset, value)
     }
 
     fun setFloat(offset: Long, value: Float) {
-        checkOffset(offset, 4)
+        checkOffset(offset, 4L)
         setFloatUnsafe(offset, value)
     }
 
     fun setDouble(offset: Long, value: Double) {
-        checkOffset(offset, 8)
+        checkOffset(offset, 8L)
         setDoubleUnsafe(offset, value)
     }
 
@@ -492,7 +473,7 @@ interface MemoryPointer : AutoCloseable {
         return a
     }
 
-    fun subList(offset: Long = 0, length: Long = this.length): MemoryPointer {
+    fun subList(offset: Long = 0L, length: Long = this.length): MemoryPointer {
         if (offset < 0L || offset + length > this.length) {
             throw IndexOutOfBoundsException("offset $offset is out of bounds for length $length")
         }
@@ -500,7 +481,7 @@ interface MemoryPointer : AutoCloseable {
     }
 
     fun ensureCapacity(capacity: Long) {
-        require(capacity >= 0) { "Capacity must be positive or zero" }
+        require(capacity >= 0L) { "Capacity must be positive or zero" }
         if (capacity > this.length) {
             reallocate(min(capacity, length * 2L))
         }
@@ -513,8 +494,8 @@ interface MemoryPointer : AutoCloseable {
         }
     }
 
-    private fun checkOffset(offset: Long, unitSize: Int) {
-        if (offset < 0 || offset + unitSize > length) {
+    private fun checkOffset(offset: Long, unitSize: Long) {
+        if (offset < 0L || offset + unitSize > length) {
             throw IndexOutOfBoundsException("Offset $offset is out of bounds for length $length")
         }
     }
@@ -529,7 +510,7 @@ interface MemoryPointer : AutoCloseable {
     }
 
     private fun checkSrcByteIndexRange(srcByteOffset: Long, length: Int) {
-        if (srcByteOffset < 0 || srcByteOffset > this.length) {
+        if (srcByteOffset < 0L || srcByteOffset > this.length) {
             throw IndexOutOfBoundsException("srcByteOffset $srcByteOffset is out of bounds for length ${this.length}")
         }
         if (length < 0 || srcByteOffset + length > this.length) {
@@ -547,7 +528,7 @@ interface MemoryPointer : AutoCloseable {
     }
 
     private fun checkDstByteIndexRange(dstByteOffset: Long, length: Int) {
-        if (dstByteOffset < 0 || dstByteOffset > this.length) {
+        if (dstByteOffset < 0L || dstByteOffset > this.length) {
             throw IndexOutOfBoundsException("dstByteOffset $dstByteOffset is out of bounds for length ${this.length}")
         }
         if (length < 0 || dstByteOffset + length > this.length) {
@@ -558,14 +539,14 @@ interface MemoryPointer : AutoCloseable {
     companion object {
         @JvmStatic
         fun wrap(address: Long, length: Long): MemoryPointer {
-            require(address >= 0) { "Address must be positive or zero" }
-            require(length >= 0) { "Length must be positive or zero" }
+            require(address >= 0L) { "Address must be positive or zero" }
+            require(length >= 0L) { "Length must be positive or zero" }
             return WrappedPointer(address, length)
         }
 
         @JvmStatic
         fun malloc(length: Long): MemoryPointer {
-            require(length >= 0) { "Length must be positive or zero" }
+            require(length >= 0L) { "Length must be positive or zero" }
             val pointer = MemoryPointerImpl(MemoryTracker.allocate(length), length)
             MemoryCleaner.register(pointer)
             return pointer

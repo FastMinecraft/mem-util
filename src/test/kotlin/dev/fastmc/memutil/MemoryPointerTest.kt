@@ -65,11 +65,11 @@ class MemoryPointerTest {
         val checkOffsetMethod = MemoryPointer::class.java.getDeclaredMethod(
             "checkOffset",
             Long::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType
+            Long::class.javaPrimitiveType
         )
         checkOffsetMethod.isAccessible = true
 
-        val checkOffset: MemoryPointer.(Long, Int) -> Unit = { offset, size ->
+        val checkOffset: MemoryPointer.(Long, Long) -> Unit = { offset, size ->
             runCatching {
                 checkOffsetMethod.invoke(this, offset, size)
             }.onFailure {
@@ -78,22 +78,22 @@ class MemoryPointerTest {
         }
 
         assertDoesNotThrow {
-            pointer.checkOffset(0, 1)
-            pointer.checkOffset(0, 4)
-            pointer.checkOffset(7, 1)
-            pointer.checkOffset(4, 4)
+            pointer.checkOffset(0, 1L)
+            pointer.checkOffset(0, 4L)
+            pointer.checkOffset(7, 1L)
+            pointer.checkOffset(4, 4L)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            checkOffset(pointer, -1, 1)
+            checkOffset(pointer, -1, 1L)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            checkOffset(pointer, -1, 4)
+            checkOffset(pointer, -1, 4L)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            checkOffset(pointer, 8, 1)
+            checkOffset(pointer, 8, 1L)
         }
         assertFailsWith(IndexOutOfBoundsException::class) {
-            checkOffset(pointer, 5, 4)
+            checkOffset(pointer, 5, 4L)
         }
 
         pointer.free()
@@ -184,7 +184,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getByteUnsafe(i))
+            assert(array[i] == pointer.getByteUnsafe(i.toLong()))
         }
 
         pointer.free()
@@ -201,7 +201,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getShortUnsafe(i * 2))
+            assert(array[i] == pointer.getShortUnsafe(i * 2L))
         }
 
         pointer.free()
@@ -218,7 +218,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getIntUnsafe(i * 4))
+            assert(array[i] == pointer.getIntUnsafe(i * 4L))
         }
 
         pointer.free()
@@ -235,7 +235,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getLongUnsafe(i * 8))
+            assert(array[i] == pointer.getLongUnsafe(i * 8L))
         }
 
         pointer.free()
@@ -252,7 +252,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getFloatUnsafe(i * 4))
+            assert(array[i] == pointer.getFloatUnsafe(i * 4L))
         }
 
         pointer.free()
@@ -269,7 +269,7 @@ class MemoryPointerTest {
         }
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getDoubleUnsafe(i * 8))
+            assert(array[i] == pointer.getDoubleUnsafe(i * 8L))
         }
 
         pointer.free()
@@ -284,7 +284,7 @@ class MemoryPointerTest {
         pointer.setBytesUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getByteUnsafe(i))
+            assert(array[i] == pointer.getByteUnsafe(i.toLong()))
         }
 
         assert(array.contentEquals(pointer.getBytesUnsafe()))
@@ -303,7 +303,7 @@ class MemoryPointerTest {
         pointer.setShortsUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getShortUnsafe(i * 2))
+            assert(array[i] == pointer.getShortUnsafe(i * 2L))
         }
 
         assert(array.contentEquals(pointer.getShortsUnsafe()))
@@ -321,7 +321,7 @@ class MemoryPointerTest {
         pointer.setIntsUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getIntUnsafe(i * 4))
+            assert(array[i] == pointer.getIntUnsafe(i * 4L))
         }
 
         assert(array.contentEquals(pointer.getIntsUnsafe()))
@@ -339,7 +339,7 @@ class MemoryPointerTest {
         pointer.setLongsUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getLongUnsafe(i * 8))
+            assert(array[i] == pointer.getLongUnsafe(i * 8L))
         }
 
         assert(array.contentEquals(pointer.getLongsUnsafe()))
@@ -357,7 +357,7 @@ class MemoryPointerTest {
         pointer.setFloatsUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getFloatUnsafe(i * 4))
+            assert(array[i] == pointer.getFloatUnsafe(i * 4L))
         }
 
         assert(array.contentEquals(pointer.getFloatsUnsafe()))
@@ -375,7 +375,7 @@ class MemoryPointerTest {
         pointer.setDoublesUnsafe(array)
 
         for (i in array.indices) {
-            assert(array[i] == pointer.getDoubleUnsafe(i * 8))
+            assert(array[i] == pointer.getDoubleUnsafe(i * 8L))
         }
 
         assert(array.contentEquals(pointer.getDoublesUnsafe()))

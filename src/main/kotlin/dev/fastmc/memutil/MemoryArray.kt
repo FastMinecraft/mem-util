@@ -16,37 +16,37 @@ interface MemoryArray : MemoryPointer {
     // Read access
     // Single read access
     fun popByte(): Byte {
-        check(pointer >= 1) { "Cannot pop from an empty memory list" }
+        check(pointer >= 1L) { "Cannot pop from an empty memory list" }
         pointer--
         return getByte(pointer)
     }
 
     fun popShort(): Short {
-        check(pointer >= 2) { "Cannot pop from an empty memory list" }
+        check(pointer >= 2L) { "Cannot pop from an empty memory list" }
         pointer -= 2
         return getShort(pointer)
     }
 
     fun popInt(): Int {
-        check(pointer >= 4) { "Cannot pop from an empty memory list" }
+        check(pointer >= 4L) { "Cannot pop from an empty memory list" }
         pointer -= 4
         return getInt(pointer)
     }
 
     fun popLong(): Long {
-        check(pointer >= 8) { "Cannot pop from an empty memory list" }
+        check(pointer >= 8L) { "Cannot pop from an empty memory list" }
         pointer -= 8
         return getLong(pointer)
     }
 
     fun popFloat(): Float {
-        check(pointer >= 4) { "Cannot pop from an empty memory list" }
+        check(pointer >= 4L) { "Cannot pop from an empty memory list" }
         pointer -= 4
         return getFloat(pointer)
     }
 
     fun popDouble(): Double {
-        check(pointer >= 8) { "Cannot pop from an empty memory list" }
+        check(pointer >= 8L) { "Cannot pop from an empty memory list" }
         pointer -= 8
         return getDouble(pointer)
     }
