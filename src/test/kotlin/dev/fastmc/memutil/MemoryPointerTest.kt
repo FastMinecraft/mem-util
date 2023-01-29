@@ -2,6 +2,7 @@ package dev.fastmc.memutil
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.test.assertFailsWith
 
@@ -56,6 +57,52 @@ class MemoryPointerTest {
             assert(pointer.getByteUnsafe(i) == 0.toByte())
         }
         pointer.free()
+    }
+
+    @Test
+    fun testRawWrapping() {
+        assertFailsWith(IllegalArgumentException::class) {
+            MemoryPointer.wrap(0, -1)
+        }
+
+        assertFailsWith(IllegalArgumentException::class) {
+            MemoryPointer.wrap(-1, 0)
+        }
+
+        val address = UNSAFE.allocateMemory(TestUtils.TEST_DATA_SIZE.toLong())
+        val pointer = MemoryPointer.wrap(address, TestUtils.TEST_DATA_SIZE.toLong())
+        assert(pointer.address == address)
+        assert(pointer.length == TestUtils.TEST_DATA_SIZE.toLong())
+
+        assertFailsWith(UnsupportedOperationException::class) {
+            pointer.free()
+        }
+
+        val a = TestUtils.randomBytes()
+        UNSAFE.copyMemory(a, BYTE_ARRAY_OFFSET.toLong(), null, address, a.size.toLong())
+
+        for (i in a.indices) {
+            assert(pointer.getByteUnsafe(i.toLong()) == a[i])
+        }
+
+        UNSAFE.freeMemory(address)
+    }
+
+    @Test
+    fun testNioBufferWrapping() {
+        val buffer = ByteBuffer.allocateDirect(TestUtils.TEST_DATA_SIZE)
+        val pointer = MemoryPointer.wrap(buffer)
+
+        assertFailsWith(UnsupportedOperationException::class) {
+            pointer.free()
+        }
+
+        val a = TestUtils.randomBytes()
+        buffer.put(a)
+
+        for (i in a.indices) {
+            assert(pointer.getByteUnsafe(i.toLong()) == a[i])
+        }
     }
 
     @Test

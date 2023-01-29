@@ -1,5 +1,6 @@
 package dev.fastmc.memutil
 
+import java.nio.*
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -537,6 +538,12 @@ interface MemoryPointer : AutoCloseable {
     }
 
     companion object {
+        @JvmStatic
+        fun wrap(buffer: Buffer): MemoryPointer {
+            require(buffer.isDirect) { "Buffer must be direct" }
+            return wrap(buffer.address, buffer.byteCapacity)
+        }
+
         @JvmStatic
         fun wrap(address: Long, length: Long): MemoryPointer {
             require(address >= 0L) { "Address must be positive or zero" }

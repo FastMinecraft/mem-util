@@ -17,6 +17,35 @@ class MemoryArrayTest {
     }
 
     @Test
+    fun testRawWrapping() {
+        assertFailsWith(IllegalArgumentException::class) {
+            MemoryArray.wrap(0, -1)
+        }
+
+        assertFailsWith(IllegalArgumentException::class) {
+            MemoryArray.wrap(-1, 0)
+        }
+
+        val address = UNSAFE.allocateMemory(TestUtils.TEST_DATA_SIZE.toLong())
+        val memArray = MemoryArray.wrap(address, TestUtils.TEST_DATA_SIZE.toLong())
+        assert(memArray.address == address)
+        assert(memArray.length == TestUtils.TEST_DATA_SIZE.toLong())
+
+        assertFailsWith(UnsupportedOperationException::class) {
+            memArray.free()
+        }
+
+        val a = TestUtils.randomBytes()
+        memArray.pushBytes(a)
+
+        for (i in a.indices) {
+            assert(memArray.getByteUnsafe(i.toLong()) == a[i])
+        }
+
+        UNSAFE.freeMemory(address)
+    }
+
+    @Test
     fun testPushByteSingle() {
         val array = TestUtils.randomBytes()
         val memArray = MemoryArray.malloc(array.size.toLong())

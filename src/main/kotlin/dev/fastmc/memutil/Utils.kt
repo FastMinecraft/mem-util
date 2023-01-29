@@ -1,6 +1,7 @@
 package dev.fastmc.memutil
 
 import sun.misc.Unsafe
+import java.nio.*
 
 internal val UNSAFE = run {
     val field = Unsafe::class.java.getDeclaredField("theUnsafe")
@@ -14,3 +15,19 @@ internal val INT_ARRAY_OFFSET = UNSAFE.arrayBaseOffset(IntArray::class.java)
 internal val LONG_ARRAY_OFFSET = UNSAFE.arrayBaseOffset(LongArray::class.java)
 internal val FLOAT_ARRAY_OFFSET = UNSAFE.arrayBaseOffset(FloatArray::class.java)
 internal val DOUBLE_ARRAY_OFFSET = UNSAFE.arrayBaseOffset(DoubleArray::class.java)
+
+private val ADDRESS_OFFSET = UNSAFE.objectFieldOffset(Buffer::class.java.getDeclaredField("address"))
+
+internal val Buffer.address: Long
+    get() = UNSAFE.getLong(this, ADDRESS_OFFSET)
+
+internal val Buffer.byteCapacity: Long
+    get() = when (this) {
+        is ByteBuffer -> this.capacity().toLong()
+        is ShortBuffer -> this.capacity().toLong() * 2L
+        is IntBuffer -> this.capacity().toLong() * 4L
+        is LongBuffer -> this.capacity().toLong() * 8L
+        is FloatBuffer -> this.capacity().toLong() * 4L
+        is DoubleBuffer -> this.capacity().toLong() * 8L
+        else -> throw IllegalArgumentException("Unsupported buffer type: ${this.javaClass}")
+    }

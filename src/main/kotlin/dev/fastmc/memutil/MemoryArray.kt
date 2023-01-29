@@ -1,5 +1,6 @@
 package dev.fastmc.memutil
 
+import java.nio.Buffer
 import kotlin.math.max
 
 interface MemoryArray : MemoryPointer {
@@ -140,12 +141,19 @@ interface MemoryArray : MemoryPointer {
 
     companion object {
         @JvmStatic
-        fun wrap(address: Long, length: Long): MemoryArray {
-            return wrap(MemoryPointer.wrap(address, length), length)
+        fun wrap(buffer: Buffer): MemoryPointer {
+            require(buffer.isDirect) { "Buffer must be direct" }
+            return wrap(buffer.address, buffer.byteCapacity)
         }
 
         @JvmStatic
-        fun wrap(pointer: MemoryPointer, offset: Long, length: Long = pointer.length): MemoryArray {
+        fun wrap(address: Long, length: Long): MemoryArray {
+            return wrap(MemoryPointer.wrap(address, length))
+        }
+
+        @JvmStatic
+        fun wrap(pointer: MemoryPointer, offset: Long = 0L, length: Long = pointer.length): MemoryArray {
+            require(offset >= 0) { "Offset must be positive or zero" }
             require(length >= 0) { "Length must be positive or zero" }
             return WrappedMemoryArray(pointer, offset, length)
         }
