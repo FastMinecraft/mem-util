@@ -1,4 +1,5 @@
 @file:JvmName("JomlUtil")
+
 package dev.fastmc.memutil
 
 import org.joml.*

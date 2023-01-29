@@ -1,10 +1,10 @@
 package dev.fastmc.memutil
 
-import java.nio.*
+import java.nio.Buffer
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-internal class AddressContainer(address: Long, length: Long): MemoryPointer {
+internal class AddressContainer(address: Long, length: Long) : MemoryPointer {
     private val address0 = AtomicLong(address)
     private val length0 = AtomicLong(length)
 

@@ -1,9 +1,6 @@
 package dev.fastmc.memutil
 
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.condition.DisabledIf
-import java.lang.management.ManagementFactory
 import java.util.*
 import kotlin.test.Test
 

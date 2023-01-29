@@ -2,8 +2,6 @@ package dev.fastmc.memutil
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.test.assertFailsWith
 
 class MemoryArrayTest {
