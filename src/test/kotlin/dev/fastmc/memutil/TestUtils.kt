@@ -1,9 +1,15 @@
 package dev.fastmc.memutil
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.*
 
 object TestUtils {
     const val TEST_DATA_SIZE = 1000
+
+    fun allocDirectBuffer(capacity: Int): ByteBuffer {
+        return ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder())
+    }
 
     fun randomBytes(): ByteArray {
         val random = Random()

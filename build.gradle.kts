@@ -30,6 +30,13 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.1")
+
+    testImplementation("org.joml:joml:1.10.4")
+    testImplementation("it.unimi.dsi:fastutil:8.5.11")
+
+    compileOnly("org.joml:joml:1.10.4")
+    compileOnly("it.unimi.dsi:fastutil:8.5.11")
 }
 
 tasks {

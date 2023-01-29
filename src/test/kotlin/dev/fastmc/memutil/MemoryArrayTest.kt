@@ -49,8 +49,7 @@ class MemoryArrayTest {
 
     @Test
     fun testNioBufferWrapping() {
-        val buffer = ByteBuffer.allocateDirect(TestUtils.TEST_DATA_SIZE * 4)
-        buffer.order(ByteOrder.nativeOrder())
+        val buffer = TestUtils.allocDirectBuffer(TestUtils.TEST_DATA_SIZE * 4)
         val memArray = MemoryArray.wrap(buffer)
 
         val a = TestUtils.randomInts()
