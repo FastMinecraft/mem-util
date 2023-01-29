@@ -4,11 +4,11 @@ import kotlin.math.max
 
 interface MemoryArray : MemoryPointer {
     var pointer: Long
-    
+
     fun isEmpty(): Boolean {
         return pointer == 0L
     }
-    
+
     fun isNotEmpty(): Boolean {
         return pointer != 0L
     }
@@ -153,7 +153,9 @@ interface MemoryArray : MemoryPointer {
         @JvmStatic
         fun malloc(length: Long): MemoryArray {
             require(length >= 0) { "Length must be positive or zero" }
-            return MemoryArrayImpl(UNSAFE.allocateMemory(length), length)
+            val memoryArray = MemoryArrayImpl(MemoryTracker.allocate(length), length)
+            MemoryCleaner.register(memoryArray)
+            return memoryArray
         }
 
         @JvmStatic
@@ -193,7 +195,7 @@ internal class WrappedMemoryArray(var base: MemoryPointer, var offset: Long, ove
     }
 }
 
-internal class MemoryArrayImpl(override var address: Long, override var length: Long) : MemoryArray {
+internal class MemoryArrayImpl(address: Long, length: Long) : AddressHolder(address, length), MemoryArray {
     override var pointer = 0L
 }
 
@@ -323,7 +325,7 @@ inline fun MemoryArray.forEachByte(
     length: Int = this.pointer.toInt(),
     block: (Byte) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 1)
+    checkForeachIndexRange(byteOffset, length, 1)
     forEachByteUnsafe(byteOffset, length, block)
 }
 
@@ -332,7 +334,7 @@ inline fun MemoryArray.forEachByteIndexed(
     length: Int = this.pointer.toInt(),
     block: (Int, Byte) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 1)
+    checkForeachIndexRange(byteOffset, length, 1)
     forEachByteIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -341,7 +343,7 @@ inline fun MemoryArray.forEachShort(
     length: Int = (this.pointer / 2L).toInt(),
     block: (Short) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 2)
+    checkForeachIndexRange(byteOffset, length, 2)
     forEachShortUnsafe(byteOffset, length, block)
 }
 
@@ -350,7 +352,7 @@ inline fun MemoryArray.forEachShortIndexed(
     length: Int = (this.pointer / 2L).toInt(),
     block: (Int, Short) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 2)
+    checkForeachIndexRange(byteOffset, length, 2)
     forEachShortIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -359,7 +361,7 @@ inline fun MemoryArray.forEachInt(
     length: Int = (this.pointer / 4L).toInt(),
     block: (Int) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachIntUnsafe(byteOffset, length, block)
 }
 
@@ -368,7 +370,7 @@ inline fun MemoryArray.forEachIntIndexed(
     length: Int = (this.pointer / 4L).toInt(),
     block: (Int, Int) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachIntIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -377,7 +379,7 @@ inline fun MemoryArray.forEachLong(
     length: Int = (this.pointer / 8L).toInt(),
     block: (Long) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachLongUnsafe(byteOffset, length, block)
 }
 
@@ -386,7 +388,7 @@ inline fun MemoryArray.forEachLongIndexed(
     length: Int = (this.pointer / 8L).toInt(),
     block: (Int, Long) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachLongIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -395,7 +397,7 @@ inline fun MemoryArray.forEachFloat(
     length: Int = (this.pointer / 4L).toInt(),
     block: (Float) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachFloatUnsafe(byteOffset, length, block)
 }
 
@@ -404,7 +406,7 @@ inline fun MemoryArray.forEachFloatIndexed(
     length: Int = (this.pointer / 4L).toInt(),
     block: (Int, Float) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachFloatIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -413,7 +415,7 @@ inline fun MemoryArray.forEachDouble(
     length: Int = (this.pointer / 8L).toInt(),
     block: (Double) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachDoubleUnsafe(byteOffset, length, block)
 }
 

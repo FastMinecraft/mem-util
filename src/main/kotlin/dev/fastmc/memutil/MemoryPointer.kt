@@ -1,21 +1,72 @@
 package dev.fastmc.memutil
 
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
+internal class AddressContainer(address: Long, length: Long): MemoryPointer {
+    private val address0 = AtomicLong(address)
+    private val length0 = AtomicLong(length)
+
+    override var address: Long
+        get() = address0.get()
+        set(value) {
+            require(value >= 0) { "Address must be positive or zero" }
+            address0.set(value)
+        }
+
+    override var length: Long
+        get() = length0.get()
+        set(value) {
+            require(value >= 0) { "Length must be positive or zero" }
+            length0.set(value)
+        }
+
+    override fun reallocate(newLength: Long) {
+        require(newLength >= 0) { "Length must be positive or zero" }
+        val prev = address0.getAndSet(-1)
+        if (prev == 0L) {
+            address0.set(MemoryTracker.allocate(newLength))
+            length0.set(newLength)
+        } else if (prev > 0L) {
+            address0.set(MemoryTracker.reallocate(prev, length0.get(), newLength))
+            length0.set(newLength)
+        }
+    }
+
+    override fun free() {
+        MemoryTracker.free(address0.getAndSet(0L), length0.getAndSet(0L))
+    }
+}
+
+internal abstract class AddressHolder(val container: AddressContainer) : MemoryPointer {
+    constructor(address: Long, length: Long) : this(AddressContainer(address, length))
+
+    override var address by container::address
+    override var length by container::length
+
+    override fun reallocate(newLength: Long) {
+        container.reallocate(newLength)
+    }
+
+    override fun free() {
+        container.free()
+    }
+}
+
 interface MemoryPointer : AutoCloseable {
-    var length: Long
     var address: Long
+    var length: Long
 
     fun reallocate(newLength: Long) {
         require(newLength >= 0) { "Length must be positive or zero" }
-        address = if (address == 0L) UNSAFE.allocateMemory(newLength) else UNSAFE.reallocateMemory(address, newLength)
+        address = MemoryTracker.reallocate(address, length, newLength)
+        length = newLength
     }
 
     fun free() {
-        if (address != 0L) {
-            UNSAFE.freeMemory(address)
-            address = 0L
-        }
+        MemoryTracker.free(address, length)
+        address = 0L
+        length = 0L
     }
 
     override fun close() {
@@ -515,7 +566,9 @@ interface MemoryPointer : AutoCloseable {
         @JvmStatic
         fun malloc(length: Long): MemoryPointer {
             require(length >= 0) { "Length must be positive or zero" }
-            return MemoryPointerImpl(if (length == 0L) 0L else UNSAFE.allocateMemory(length), length)
+            val pointer = MemoryPointerImpl(MemoryTracker.allocate(length), length)
+            MemoryCleaner.register(pointer)
+            return pointer
         }
 
         @JvmStatic
@@ -546,18 +599,7 @@ internal class WrappedPointer(address: Long, length: Long) : MemoryPointer {
     }
 }
 
-internal class MemoryPointerImpl(address: Long, length: Long) : MemoryPointer {
-    override var address = address
-        set(value) {
-            require(value >= 0) { "Address must be positive or zero" }
-            field = value
-        }
-    override var length = length
-        set(value) {
-            require(value >= 0) { "Length must be positive or zero" }
-            field = value
-        }
-}
+internal class MemoryPointerImpl(address: Long, length: Long) : AddressHolder(address, length), MemoryPointer
 
 inline fun MemoryPointer.forEachByteUnsafe(
     byteOffset: Long = 0L,
@@ -685,7 +727,7 @@ inline fun MemoryPointer.forEachByte(
     length: Int = this.length.toInt(),
     block: (Byte) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 1)
+    checkForeachIndexRange(byteOffset, length, 1)
     forEachByteUnsafe(byteOffset, length, block)
 }
 
@@ -694,7 +736,7 @@ inline fun MemoryPointer.forEachByteIndexed(
     length: Int = this.length.toInt(),
     block: (Int, Byte) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 1)
+    checkForeachIndexRange(byteOffset, length, 1)
     forEachByteIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -703,7 +745,7 @@ inline fun MemoryPointer.forEachShort(
     length: Int = (this.length / 2L).toInt(),
     block: (Short) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 2)
+    checkForeachIndexRange(byteOffset, length, 2)
     forEachShortUnsafe(byteOffset, length, block)
 }
 
@@ -712,7 +754,7 @@ inline fun MemoryPointer.forEachShortIndexed(
     length: Int = (this.length / 2L).toInt(),
     block: (Int, Short) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 2)
+    checkForeachIndexRange(byteOffset, length, 2)
     forEachShortIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -721,7 +763,7 @@ inline fun MemoryPointer.forEachInt(
     length: Int = (this.length / 4L).toInt(),
     block: (Int) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachIntUnsafe(byteOffset, length, block)
 }
 
@@ -730,7 +772,7 @@ inline fun MemoryPointer.forEachIntIndexed(
     length: Int = (this.length / 4L).toInt(),
     block: (Int, Int) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachIntIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -739,7 +781,7 @@ inline fun MemoryPointer.forEachLong(
     length: Int = (this.length / 8L).toInt(),
     block: (Long) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachLongUnsafe(byteOffset, length, block)
 }
 
@@ -748,7 +790,7 @@ inline fun MemoryPointer.forEachLongIndexed(
     length: Int = (this.length / 8L).toInt(),
     block: (Int, Long) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachLongIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -757,7 +799,7 @@ inline fun MemoryPointer.forEachFloat(
     length: Int = (this.length / 4L).toInt(),
     block: (Float) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachFloatUnsafe(byteOffset, length, block)
 }
 
@@ -766,7 +808,7 @@ inline fun MemoryPointer.forEachFloatIndexed(
     length: Int = (this.length / 4L).toInt(),
     block: (Int, Float) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 4)
+    checkForeachIndexRange(byteOffset, length, 4)
     forEachFloatIndexedUnsafe(byteOffset, length, block)
 }
 
@@ -775,7 +817,7 @@ inline fun MemoryPointer.forEachDouble(
     length: Int = (this.length / 8L).toInt(),
     block: (Double) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachDoubleUnsafe(byteOffset, length, block)
 }
 
@@ -784,7 +826,7 @@ inline fun MemoryPointer.forEachDoubleIndexed(
     length: Int = (this.length / 8L).toInt(),
     block: (Int, Double) -> Unit
 ) {
-    checkForeachIndexRange(byteOffset, length , 8)
+    checkForeachIndexRange(byteOffset, length, 8)
     forEachDoubleIndexedUnsafe(byteOffset, length, block)
 }
 
