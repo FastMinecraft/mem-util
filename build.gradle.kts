@@ -5,7 +5,7 @@ plugins {
     id("dev.fastmc.maven-repo").version("1.0-SNAPSHOT")
 }
 
-group = "org.example"
+group = "dev.fastmc"
 version = "1.0-SNAPSHOT"
 
 java {
