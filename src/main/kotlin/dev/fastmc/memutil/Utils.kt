@@ -31,3 +31,7 @@ internal val Buffer.byteCapacity: Long
         is DoubleBuffer -> this.capacity().toLong() * 8L
         else -> throw IllegalArgumentException("Unsupported buffer type: ${this.javaClass}")
     }
+
+fun memcpy(src: MemoryPointer, dst: MemoryPointer, srcOffset: Long = 0L, dstOffset: Long = 0L, length: Long) {
+    UNSAFE.copyMemory(src.address + srcOffset, dst.address + dstOffset, length)
+}
